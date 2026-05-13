@@ -1,0 +1,29 @@
+{
+	"mcpServers": {
+		"https://github.com/salesforcecli/mcp": {
+			"type": "stdio",
+			"command": "node",
+			"args": [
+				"c:\\Users\\PKIG\\AppData\\Roaming\\Cursor\\User\\globalStorage\\salesforce.salesforcedx-agentforce-vibes-2\\mcp-ootb\\vibes-mcp-wrapper.js",
+				"@salesforce/mcp@latest",
+				"--orgs",
+				"ALLOW_ALL_ORGS",
+				"--toolsets",
+				"all"
+			],
+			"package": "@salesforce/mcp",
+			"version": "latest",
+			"disabled": true
+		},
+		"https://github.com/forcedotcom/mcp-hosted/wiki/available-tools-and-servers#salesforce-api-context": {
+			"type": "streamableHttp",
+			"url": "https://api.salesforce.com/platform/mcp/v1-beta.2/platform/salesforce-api-context",
+			"disabled": true
+		},
+		"https://github.com/forcedotcom/mcp-hosted/wiki/available-tools-and-servers#metadata-experts": {
+			"type": "streamableHttp",
+			"url": "https://api.salesforce.com/platform/mcp/v1-beta.2/platform/metadata-experts",
+			"disabled": true
+		}
+	}
+}

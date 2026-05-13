@@ -1,0 +1,45 @@
+# Secrets & local env
+.env
+.env.*
+!.env.example
+
+# Python
+__pycache__/
+*.py[cod]
+*$py.class
+*.egg-info/
+.venv/
+venv/
+env/
+.pytest_cache/
+.mypy_cache/
+.ruff_cache/
+
+# OS
+.DS_Store
+Thumbs.db
+desktop.ini
+
+# IDE
+.idea/
+.vscode/
+*.swp
+*.swo
+
+# Data / build artifacts
+data/geojson/*.geojson
+!data/geojson/README.txt
+*.sqlite
+*.db
+dist/
+build/
+
+# Streamlit
+.streamlit/secrets.toml
+
+# Salesforce SFDX (tidak terkait deploy app)
+.sfdx/
+
+# Logs
+*.log
+logs/

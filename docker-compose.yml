@@ -1,0 +1,74 @@
+# =============================================================================
+# docker-compose.yml — production-ready (cocok untuk Coolify / VPS).
+#
+# • Tidak meng-ekspos port DB ke publik (hanya jaringan internal Docker).
+# • Backend & frontend pakai `expose` saja → reverse proxy (Coolify Traefik)
+#   yang akan attach label dan terminate HTTPS.
+# • Untuk LOCAL DEV → file `docker-compose.override.yml` otomatis dimuat
+#   dan menambah `ports:` (8010, 8501, 5433) untuk akses dari host.
+#
+# Pemakaian:
+#   Local dev   : docker compose up --build
+#   Production  : docker compose -f docker-compose.yml up -d --build
+# =============================================================================
+
+services:
+  db:
+    image: postgis/postgis:15-3.3
+    restart: unless-stopped
+    environment:
+      POSTGRES_USER: ${POSTGRES_USER:-geofinder}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-password}
+      POSTGRES_DB: ${POSTGRES_DB:-geofinder}
+    volumes:
+      - pgdata:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U ${POSTGRES_USER:-geofinder} -d ${POSTGRES_DB:-geofinder}"]
+      interval: 10s
+      timeout: 5s
+      retries: 10
+
+  backend:
+    build:
+      context: ./backend
+      dockerfile: Dockerfile
+    restart: unless-stopped
+    env_file:
+      - .env
+    environment:
+      DATABASE_URL: postgresql+asyncpg://${POSTGRES_USER:-geofinder}:${POSTGRES_PASSWORD:-password}@db:5432/${POSTGRES_DB:-geofinder}
+    depends_on:
+      db:
+        condition: service_healthy
+    expose:
+      - "8000"
+    volumes:
+      - ./data:/app/data:ro
+    healthcheck:
+      test: ["CMD", "python", "-c", "import urllib.request,sys; sys.exit(0 if urllib.request.urlopen('http://localhost:8000/health',timeout=3).status==200 else 1)"]
+      interval: 30s
+      timeout: 10s
+      retries: 5
+      start_period: 25s
+
+  frontend:
+    build:
+      context: ./frontend
+      dockerfile: Dockerfile
+    restart: unless-stopped
+    environment:
+      API_URL: ${API_URL:-http://backend:8000/api}
+    depends_on:
+      backend:
+        condition: service_healthy
+    expose:
+      - "8501"
+    healthcheck:
+      test: ["CMD", "python", "-c", "import urllib.request,sys; sys.exit(0 if urllib.request.urlopen('http://localhost:8501/_stcore/health',timeout=3).status==200 else 1)"]
+      interval: 30s
+      timeout: 10s
+      retries: 5
+      start_period: 35s
+
+volumes:
+  pgdata:

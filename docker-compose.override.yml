@@ -1,0 +1,30 @@
+# =============================================================================
+# docker-compose.override.yml — otomatis dimuat oleh `docker compose up`.
+#
+# Berisi tambahan KHUSUS LOCAL DEVELOPMENT:
+#   • Ekspos port DB ke host (5433) supaya bisa connect dari pgAdmin / dbeaver
+#   • Ekspos port backend (8010) dan frontend (8501) untuk akses browser
+#   • Pakai uvicorn --reload untuk hot reload backend
+#
+# Di server PRODUCTION (Coolify), jalankan dengan flag agar override TIDAK ikut:
+#   docker compose -f docker-compose.yml up -d --build
+# =============================================================================
+
+services:
+  db:
+    ports:
+      - "5433:5432"
+
+  backend:
+    ports:
+      - "8010:8000"
+    command: uvicorn main:app --host 0.0.0.0 --port 8000 --reload
+    volumes:
+      - ./backend:/app
+      - ./data:/app/data:ro
+
+  frontend:
+    ports:
+      - "8501:8501"
+    volumes:
+      - ./frontend:/app
