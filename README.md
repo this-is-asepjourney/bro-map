@@ -64,6 +64,10 @@ Biasanya **skrip/host menyambung ke Postgres yang salah**: di Windows sering sud
 
 ## Deploy ke Coolify
 
+**📘 Panduan lengkap langkah-demi-langkah ada di [DEPLOY_COOLIFY.md](./DEPLOY_COOLIFY.md).**
+
+Ringkasan singkat di bawah; untuk troubleshooting & checklist final buka file di atas.
+
 Project ini sudah disiapkan untuk Coolify (dan VPS biasa dengan Docker). Inti file deploy:
 
 - `docker-compose.yml` — production-clean (tanpa `--reload`, tanpa port DB public, dengan healthcheck).
