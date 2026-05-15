@@ -1,30 +1,17 @@
 # =============================================================================
-# docker-compose.yml — production-ready (Coolify, VPS, Dokploy).
+# docker-compose.yml — satu file untuk lokal, VPS, Dokploy (Traefik).
 #
-# • DB tidak di-publish ke host (hanya jaringan internal compose).
-# • Backend & frontend memakai `expose` → reverse proxy (Traefik) mengakses
-#   port internal; HTTPS / domain diurus panel hosting.
+# • db hanya di jaringan internal proyek (tidak ke dokploy-network).
+# • backend & frontend: expose + dokploy-network agar Traefik Dokploy bisa route.
+# • Akses publik: domain di panel Dokploy → frontend port 8501, backend 8000.
+# • GEODATA_BIND (opsional): default ./data; di Dokploy bisa ../files/... (lihat docs Dokploy).
 #
-# --- Dokploy (akses publik lewat domain) ---
-# 1) Sertakan overlay jaringan Traefik:
-#      docker compose -f docker-compose.yml -f docker-compose.dokploy.yml up -d --build
-#    Di UI Dokploy (Advanced / custom compose command), tambahkan flag di atas
-#    jika field-nya mendukung; jika hanya satu file, salin isi
-#    `docker-compose.dokploy.yml` ke bawah file ini (networks + networks per service).
-# 2) Tab Domains → tambah domain untuk service `frontend` (port 8501) dan, jika
-#    perlu API publik, untuk `backend` (port 8000). Dokploy menambahkan label Traefik.
-# 3) Variabel lingkungan: isi seperti `.env`. Untuk data GeoJSON di luar direktori
-#    clone (disarankan Dokploy agar mount tidak ikut terhapus saat redeploy), set:
-#      GEODATA_BIND=../files/bro-map-geo
-#    lalu unggah/isikan file di path tersebut di server (lihat docs Dokploy → files).
+# Lokal tanpa jaringan dokploy-network: sekali jalankan
+#   docker network create dokploy-network
+# (nama jaringan sama dengan yang dipakai instalasi Dokploy di server.)
 #
-# --- Lokal ---
-# `docker-compose.override.yml` menambah ports (8010, 8501, 5433) dan hot-reload.
-#
-# Pemakaian:
-#   Local dev     : docker compose up --build
-#   Production    : docker compose -f docker-compose.yml up -d --build
-#   Production + Dokploy: lihat langkah (1) di atas
+# Lokal: docker compose up --build  (override menambah ports & reload)
+# Server: docker compose up -d --build
 # =============================================================================
 
 services:
@@ -59,6 +46,9 @@ services:
       - "8000"
     volumes:
       - ${GEODATA_BIND:-./data}:/app/data:ro
+    networks:
+      - default
+      - dokploy-network
     healthcheck:
       test: ["CMD", "python", "-c", "import urllib.request,sys; sys.exit(0 if urllib.request.urlopen('http://localhost:8000/health',timeout=3).status==200 else 1)"]
       interval: 30s
@@ -78,6 +68,9 @@ services:
         condition: service_healthy
     expose:
       - "8501"
+    networks:
+      - default
+      - dokploy-network
     healthcheck:
       test: ["CMD", "python", "-c", "import urllib.request,sys; sys.exit(0 if urllib.request.urlopen('http://localhost:8501/_stcore/health',timeout=3).status==200 else 1)"]
       interval: 30s
@@ -87,3 +80,7 @@ services:
 
 volumes:
   pgdata:
+
+networks:
+  dokploy-network:
+    external: true
