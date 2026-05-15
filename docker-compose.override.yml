@@ -6,8 +6,9 @@
 #   • Ekspos port backend (8010) dan frontend (8501) untuk akses browser
 #   • Pakai uvicorn --reload untuk hot reload backend
 #
-# Di server PRODUCTION (Coolify), jalankan dengan flag agar override TIDAK ikut:
+# Di server PRODUCTION (Coolify / tanpa override), jalankan:
 #   docker compose -f docker-compose.yml up -d --build
+# Dokploy + Traefik: tambahkan `-f docker-compose.dokploy.yml` (lihat docker-compose.yml).
 # =============================================================================
 
 services:
@@ -21,7 +22,7 @@ services:
     command: uvicorn main:app --host 0.0.0.0 --port 8000 --reload
     volumes:
       - ./backend:/app
-      - ./data:/app/data:ro
+      - ${GEODATA_BIND:-./data}:/app/data:ro
 
   frontend:
     ports:

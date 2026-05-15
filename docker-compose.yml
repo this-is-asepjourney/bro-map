@@ -1,15 +1,30 @@
 # =============================================================================
-# docker-compose.yml — production-ready (cocok untuk Coolify / VPS).
+# docker-compose.yml — production-ready (Coolify, VPS, Dokploy).
 #
-# • Tidak meng-ekspos port DB ke publik (hanya jaringan internal Docker).
-# • Backend & frontend pakai `expose` saja → reverse proxy (Coolify Traefik)
-#   yang akan attach label dan terminate HTTPS.
-# • Untuk LOCAL DEV → file `docker-compose.override.yml` otomatis dimuat
-#   dan menambah `ports:` (8010, 8501, 5433) untuk akses dari host.
+# • DB tidak di-publish ke host (hanya jaringan internal compose).
+# • Backend & frontend memakai `expose` → reverse proxy (Traefik) mengakses
+#   port internal; HTTPS / domain diurus panel hosting.
+#
+# --- Dokploy (akses publik lewat domain) ---
+# 1) Sertakan overlay jaringan Traefik:
+#      docker compose -f docker-compose.yml -f docker-compose.dokploy.yml up -d --build
+#    Di UI Dokploy (Advanced / custom compose command), tambahkan flag di atas
+#    jika field-nya mendukung; jika hanya satu file, salin isi
+#    `docker-compose.dokploy.yml` ke bawah file ini (networks + networks per service).
+# 2) Tab Domains → tambah domain untuk service `frontend` (port 8501) dan, jika
+#    perlu API publik, untuk `backend` (port 8000). Dokploy menambahkan label Traefik.
+# 3) Variabel lingkungan: isi seperti `.env`. Untuk data GeoJSON di luar direktori
+#    clone (disarankan Dokploy agar mount tidak ikut terhapus saat redeploy), set:
+#      GEODATA_BIND=../files/bro-map-geo
+#    lalu unggah/isikan file di path tersebut di server (lihat docs Dokploy → files).
+#
+# --- Lokal ---
+# `docker-compose.override.yml` menambah ports (8010, 8501, 5433) dan hot-reload.
 #
 # Pemakaian:
-#   Local dev   : docker compose up --build
-#   Production  : docker compose -f docker-compose.yml up -d --build
+#   Local dev     : docker compose up --build
+#   Production    : docker compose -f docker-compose.yml up -d --build
+#   Production + Dokploy: lihat langkah (1) di atas
 # =============================================================================
 
 services:
@@ -43,7 +58,7 @@ services:
     expose:
       - "8000"
     volumes:
-      - ./data:/app/data:ro
+      - ${GEODATA_BIND:-./data}:/app/data:ro
     healthcheck:
       test: ["CMD", "python", "-c", "import urllib.request,sys; sys.exit(0 if urllib.request.urlopen('http://localhost:8000/health',timeout=3).status==200 else 1)"]
       interval: 30s

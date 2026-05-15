@@ -1,0 +1,29 @@
+# =============================================================================
+# docker-compose.dokploy.yml — tambahan khusus deploy ke Dokploy (Traefik).
+#
+# Tanpa file ini, Traefik Dokploy tidak berada di satu jaringan dengan
+# backend/frontend sehingga domain publik tidak bisa diarahkan.
+#
+# Pakai bersama compose utama:
+#   docker compose -f docker-compose.yml -f docker-compose.dokploy.yml up -d --build
+#
+# Di Dokploy: Project → Compose app → Advanced → ubah perintah compose agar
+# menyertakan `-f docker-compose.dokploy.yml` (lihat komentar di docker-compose.yml).
+#
+# Jangan set container_name pada service (rekomendasi Dokploy).
+# =============================================================================
+
+services:
+  backend:
+    networks:
+      - default
+      - dokploy-network
+
+  frontend:
+    networks:
+      - default
+      - dokploy-network
+
+networks:
+  dokploy-network:
+    external: true
