@@ -1,0 +1,41 @@
+services:
+  db:
+    image: postgis/postgis:15-3.3
+    environment:
+      POSTGRES_USER: geofinder
+      POSTGRES_PASSWORD: password
+      POSTGRES_DB: geofinder
+    # Host 5433 → hindari bentrok dengan Postgres lokal Windows di 5432
+    ports:
+      - "5433:5432"
+    volumes:
+      - pgdata:/var/lib/postgresql/data
+
+  backend:
+    build:
+      context: ./backend
+      dockerfile: Dockerfile
+    ports:
+      - "8010:8000"
+    env_file:
+      - .env
+    environment:
+      DATABASE_URL: postgresql+psycopg://geofinder:password@db:5432/geofinder
+    depends_on:
+      - db
+    command: uvicorn main:app --host 0.0.0.0 --port 8000 --reload
+
+  frontend:
+    build:
+      context: ./frontend
+      dockerfile: Dockerfile
+    ports:
+      - "8501:8501"
+    environment:
+      API_URL: http://backend:8000/api
+    depends_on:
+      - backend
+    command: streamlit run app.py --server.address 0.0.0.0 --server.port 8501
+
+volumes:
+  pgdata:
